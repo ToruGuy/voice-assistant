@@ -217,8 +217,9 @@ def chat_with_gpt(user_message):
         "Content-Type": "application/json"
     }
     
+    # Use gpt-4o or gpt-4o-mini for text-based chat
     payload = {
-        "model": "gpt-4o-audio-preview",
+        "model": "gpt-4o",
         "messages": conversation_history,
         "tools": FUNCTION_DEFINITIONS,
         "tool_choice": "auto"
