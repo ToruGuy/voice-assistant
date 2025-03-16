@@ -1,0 +1,3 @@
+[submodule "3party/mcp-python-sdk"]
+	path = 3party/mcp-python-sdk
+	url = https://github.com/modelcontextprotocol/python-sdk
