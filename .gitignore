@@ -1,2 +1,22 @@
 recordings
 .env
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs and temp files
+*.log
+*.tmp
