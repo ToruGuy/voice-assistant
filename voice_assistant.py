@@ -347,62 +347,67 @@ def play_audio(file_path):
 
 def main():
     """Main function to run the voice assistant."""
-    print("Voice Assistant with GPT-4o Audio")
-    print("--------------------------------")
-    print("Press Enter to start recording, and press Enter again to stop.")
-    print("Type 'exit' or 'quit' to end the program.")
-    
-    while True:
-        user_input = input("\nPress Enter to start recording (or type 'exit' to quit): ")
+    try:
+        # Display initial instructions
+        print("\nVoice Assistant with GPT-4o Audio")
+        print("--------------------------------")
+        print("Press and hold SPACE to record, release to stop.")
+        print("Press ESC to exit.\n")
         
-        if user_input.lower() in ['exit', 'quit']:
-            break
+        space_recorder = SpaceKeyRecorder()
         
-        # Start recording
-        stop_event = threading.Event()
-        
-        # Create a thread for recording
-        recording_thread = threading.Thread(target=lambda: None)
-        
-        # Start recording in the main thread
-        audio_data, wav_filename = record_audio(stop_event)
-        
-        # Wait for user to press Enter to stop recording
-        input("Press Enter to stop recording...")
-        stop_event.set()
-        
-        if recording_thread.is_alive():
-            recording_thread.join()
-        
-        # Print the saved audio filename for debugging
-        print(f"\nRecording saved to: {wav_filename}")
-        
-        # Transcribe audio
-        transcription = transcribe_audio(audio_data)
-        
-        if not transcription:
-            print("Failed to transcribe audio. Please try again.")
-            continue
-        
-        print(f"\nYou: {transcription}")
-        
-        # Send transcription to GPT-4o
-        response = chat_with_gpt(transcription)
-        print(f"\nAssistant: {response}")
-        
-        # Save response to file for debugging
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        response_path = os.path.join(os.getcwd(), "recordings", f"response_{timestamp}.txt")
-        with open(response_path, 'w') as f:
-            f.write(response)
-        print(f"Response saved to: {response_path}")
-        
-        # Convert response to speech and play it
-        audio_file = text_to_speech(response)
-        if audio_file:
-            play_audio(audio_file)
-            # Clean up the audio file after playing
-            os.unlink(audio_file)
+        try:
+            while True:
+                print("\nWaiting for you to press SPACE to start recording...")
+                
+                # Wait for space key to be pressed and released
+                wav_buffer, wav_filename = space_recorder.wait_for_space_key_recording()
+                
+                if wav_buffer is None:
+                    logger.info("No recording captured or user exited.")
+                    # Check if the listener is still running
+                    if not space_recorder.listener.running:
+                        print("Exiting voice assistant. Goodbye!")
+                        break
+                    continue
+                
+                print("Processing your recording...")
+                
+                # Transcribe audio
+                transcription = transcribe_audio(wav_buffer)
+                
+                if transcription is None:
+                    logger.error("Failed to transcribe audio.")
+                    continue
+                    
+                print(f"You said: {transcription}")
+                    
+                # Send to GPT for processing
+                response = chat_with_gpt(transcription)
+                print(f"\nAssistant: {response}")
+                
+                # Save response to file for debugging
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                response_path = os.path.join(os.getcwd(), "recordings", f"response_{timestamp}.txt")
+                with open(response_path, 'w') as f:
+                    f.write(response)
+                print(f"Response saved to: {response_path}")
+                
+                # Convert response to speech and play it
+                audio_file = text_to_speech(response)
+                
+                if audio_file:
+                    play_audio(audio_file)
+                
+        finally:
+            # Clean up resources
+            space_recorder.close()
+            
+    except KeyboardInterrupt:
+        print("\nVoice assistant terminated.")
+    except Exception as e:
+        logger.error(f"An error occurred: {str(e)}")
+        print(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
     try:
