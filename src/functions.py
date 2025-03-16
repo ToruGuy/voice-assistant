@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from datetime import datetime
-from config import logger
+from src.config import logger
 
 # Function definitions
 def calculate_sum(a, b):

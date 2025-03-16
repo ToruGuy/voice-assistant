@@ -7,8 +7,8 @@ from datetime import datetime
 from pynput import keyboard
 import requests
 
-from config import logger, API_KEY, TRANSCRIPTION_ENDPOINT
-from audio_recorder import AudioRecorder, AudioRecorderConfig
+from src.config import logger, API_KEY, TRANSCRIPTION_ENDPOINT
+from src.audio_recorder import AudioRecorder, AudioRecorderConfig
 
 class SpaceKeyRecorder:
     """Record audio while the space key is held down."""

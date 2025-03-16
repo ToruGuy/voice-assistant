@@ -4,9 +4,9 @@ import sys
 from datetime import datetime
 
 # Import from our custom modules
-from config import logger
-from audio_handler import SpaceKeyRecorder, transcribe_audio, play_audio
-from openai_client import chat_with_gpt, text_to_speech, clear_conversation_history
+from src.config import logger
+from src.audio_handler import SpaceKeyRecorder, transcribe_audio, play_audio
+from src.openai_client import chat_with_gpt, text_to_speech, clear_conversation_history
 
 def ensure_recordings_dir():
     """Ensure the recordings directory exists."""

@@ -3,8 +3,8 @@ import json
 import tempfile
 import requests
 
-from config import logger, API_KEY, CHAT_ENDPOINT, SPEECH_ENDPOINT, DEFAULT_MODEL, TTS_MODEL, TTS_VOICE
-from functions import AVAILABLE_FUNCTIONS, FUNCTION_DEFINITIONS
+from src.config import logger, API_KEY, CHAT_ENDPOINT, SPEECH_ENDPOINT, DEFAULT_MODEL, TTS_MODEL, TTS_VOICE
+from src.functions import AVAILABLE_FUNCTIONS, FUNCTION_DEFINITIONS
 
 # Global conversation history
 conversation_history = []
@@ -21,7 +21,7 @@ def chat_with_gpt(user_message):
         "Content-Type": "application/json"
     }
     
-    # Use default model from config (o3-mini by default)
+    # Use default model from src.config (o3-mini by default)
     payload = {
         "model": DEFAULT_MODEL,
         "messages": conversation_history,
