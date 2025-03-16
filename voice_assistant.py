@@ -284,10 +284,15 @@ def get_final_response():
         "Content-Type": "application/json"
     }
     
+    # Important: Use the same model as in chat_with_gpt and include tools parameter
     payload = {
-        "model": "gpt-4o-audio-preview",
+        "model": "gpt-4o",  # Match the model used in the initial request
         "messages": conversation_history,
+        "tools": FUNCTION_DEFINITIONS,  # Include function definitions
+        "tool_choice": "auto"  # Let the model decide whether to call functions
     }
+    
+    logger.info("Getting final response after function execution...")
     
     try:
         response = requests.post(CHAT_ENDPOINT, headers=headers, json=payload)
