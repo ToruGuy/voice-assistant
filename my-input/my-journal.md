@@ -68,6 +68,8 @@ Everything working. Dividing into modules and etc.
 # MCP integration
 Creted MCP sdk submodule for better and simpler integration. Using it for RAG purposes.
 
+before 350 flow action left
+
 ```
 I want to create an simple and robust integration of MCP inside my voice assistant.
 

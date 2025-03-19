@@ -1,4 +1,7 @@
-requests
-websockets
-PyAudio
-python-dotenv
+requests>=2.31.0
+websockets>=12.0
+PyAudio>=0.2.14
+python-dotenv>=1.0.0
+asyncio>=3.4.3
+# MCP SDK - installed from local submodule, but could use PyPI version
+mcp>=0.1.0

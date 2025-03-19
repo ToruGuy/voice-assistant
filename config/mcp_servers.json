@@ -1,0 +1,11 @@
+{
+    "filesystem": {
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-filesystem",
+            "/Users/tako/Desktop"
+        ],
+        "enabled": true
+    }
+}
