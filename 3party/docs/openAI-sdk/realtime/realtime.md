@@ -1,4 +1,465 @@
-ttt001
+ealtime
+Beta
+Communicate with a GPT-4o class model in real time using WebRTC or WebSockets. Supports text and audio inputs and ouputs, along with audio transcriptions. Learn more about the Realtime API.
+Session tokens
+REST API endpoint to generate ephemeral session tokens for use in client-side applications.
+Create session
+POST
+ 
+https://api.openai.com/v1/realtime/sessions
+Create an ephemeral API token for use in client-side applications with the Realtime API. Can be configured with the same session parameters as the session.update client event.
+
+It responds with a session object, plus a client_secret key which contains a usable ephemeral API token that can be used to authenticate browser clients for the Realtime API.
+
+Request body
+
+input_audio_format
+string
+Optional
+Defaults to pcm16
+The format of input audio. Options are pcm16, g711_ulaw, or g711_alaw. For pcm16, input audio must be 16-bit PCM at a 24kHz sample rate, single channel (mono), and little-endian byte order.
+input_audio_noise_reduction
+object
+Optional
+Defaults to null
+Configuration for input audio noise reduction. This can be set to null to turn off. Noise reduction filters audio added to the input audio buffer before it is sent to VAD and the model. Filtering the audio can improve VAD and turn detection accuracy (reducing false positives) and model performance by improving perception of the input audio.
+
+Show properties
+input_audio_transcription
+object
+Optional
+Configuration for input audio transcription, defaults to off and can be set to null to turn off once on. Input audio transcription is not native to the model, since the model consumes audio directly. Transcription runs asynchronously through the /audio/transcriptions endpoint and should be treated as guidance of input audio content rather than precisely what the model heard. The client can optionally set the language and prompt for transcription, these offer additional guidance to the transcription service.
+
+Show properties
+instructions
+string
+Optional
+The default system instructions (i.e. system message) prepended to model calls. This field allows the client to guide the model on desired responses. The model can be instructed on response content and format, (e.g. "be extremely succinct", "act friendly", "here are examples of good responses") and on audio behavior (e.g. "talk quickly", "inject emotion into your voice", "laugh frequently"). The instructions are not guaranteed to be followed by the model, but they provide guidance to the model on the desired behavior.
+
+Note that the server sets default instructions which will be used if this field is not set and are visible in the session.created event at the start of the session.
+max_response_output_tokens
+integer or "inf"
+Optional
+Maximum number of output tokens for a single assistant response, inclusive of tool calls. Provide an integer between 1 and 4096 to limit output tokens, or inf for the maximum available tokens for a given model. Defaults to inf.
+modalities
+Optional
+The set of modalities the model can respond with. To disable audio, set this to ["text"].
+model
+string
+Optional
+The Realtime model used for this session.
+output_audio_format
+string
+Optional
+Defaults to pcm16
+The format of output audio. Options are pcm16, g711_ulaw, or g711_alaw. For pcm16, output audio is sampled at a rate of 24kHz.
+temperature
+number
+Optional
+Defaults to 0.8
+Sampling temperature for the model, limited to [0.6, 1.2]. For audio models a temperature of 0.8 is highly recommended for best performance.
+tool_choice
+string
+Optional
+Defaults to auto
+How the model chooses tools. Options are auto, none, required, or specify a function.
+tools
+array
+Optional
+Tools (functions) available to the model.
+
+Show properties
+turn_detection
+object
+Optional
+Configuration for turn detection, ether Server VAD or Semantic VAD. This can be set to null to turn off, in which case the client must manually trigger model response. Server VAD means that the model will detect the start and end of speech based on audio volume and respond at the end of user speech. Semantic VAD is more advanced and uses a turn detection model (in conjuction with VAD) to semantically estimate whether the user has finished speaking, then dynamically sets a timeout based on this probability. For example, if user audio trails off with "uhhm", the model will score a low probability of turn end and wait longer for the user to continue speaking. This can be useful for more natural conversations, but may have a higher latency.
+
+Show properties
+voice
+string
+Optional
+The voice the model uses to respond. Voice cannot be changed during the session once the model has responded with audio at least once. Current voice options are alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, shimmer, and verse.
+Returns
+
+The created Realtime session object, plus an ephemeral key
+
+Example request
+curl -X POST https://api.openai.com/v1/realtime/sessions \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-realtime-preview",
+    "modalities": ["audio", "text"],
+    "instructions": "You are a friendly assistant."
+  }'
+Response
+{
+  "id": "sess_001",
+  "object": "realtime.session",
+  "model": "gpt-4o-realtime-preview",
+  "modalities": ["audio", "text"],
+  "instructions": "You are a friendly assistant.",
+  "voice": "alloy",
+  "input_audio_format": "pcm16",
+  "output_audio_format": "pcm16",
+  "input_audio_transcription": {
+      "model": "whisper-1"
+  },
+  "turn_detection": null,
+  "tools": [],
+  "tool_choice": "none",
+  "temperature": 0.7,
+  "max_response_output_tokens": 200,
+  "client_secret": {
+    "value": "ek_abc123", 
+    "expires_at": 1234567890
+  }
+}
+Create transcription session
+POST
+ 
+https://api.openai.com/v1/realtime/transcription_sessions
+Create an ephemeral API token for use in client-side applications with the Realtime API specifically for realtime transcriptions. Can be configured with the same session parameters as the transcription_session.update client event.
+
+It responds with a session object, plus a client_secret key which contains a usable ephemeral API token that can be used to authenticate browser clients for the Realtime API.
+
+Request body
+
+include
+array
+Optional
+The set of items to include in the transcription. Current available items are:
+
+null.
+input_audio_format
+string
+Optional
+Defaults to pcm16
+The format of input audio. Options are pcm16, g711_ulaw, or g711_alaw. For pcm16, input audio must be 16-bit PCM at a 24kHz sample rate, single channel (mono), and little-endian byte order.
+input_audio_noise_reduction
+object
+Optional
+Defaults to null
+Configuration for input audio noise reduction. This can be set to null to turn off. Noise reduction filters audio added to the input audio buffer before it is sent to VAD and the model. Filtering the audio can improve VAD and turn detection accuracy (reducing false positives) and model performance by improving perception of the input audio.
+
+Show properties
+input_audio_transcription
+object
+Optional
+Configuration for input audio transcription. The client can optionally set the language and prompt for transcription, these offer additional guidance to the transcription service.
+
+Show properties
+modalities
+Optional
+The set of modalities the model can respond with. To disable audio, set this to ["text"].
+turn_detection
+object
+Optional
+Configuration for turn detection, ether Server VAD or Semantic VAD. This can be set to null to turn off, in which case the client must manually trigger model response. Server VAD means that the model will detect the start and end of speech based on audio volume and respond at the end of user speech. Semantic VAD is more advanced and uses a turn detection model (in conjuction with VAD) to semantically estimate whether the user has finished speaking, then dynamically sets a timeout based on this probability. For example, if user audio trails off with "uhhm", the model will score a low probability of turn end and wait longer for the user to continue speaking. This can be useful for more natural conversations, but may have a higher latency.
+
+Show properties
+Returns
+
+The created Realtime transcription session object, plus an ephemeral key
+
+Example request
+curl -X POST https://api.openai.com/v1/realtime/transcription_sessions \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+Response
+{
+  "id": "sess_BBwZc7cFV3XizEyKGDCGL",
+  "object": "realtime.transcription_session",
+  "modalities": ["audio", "text"],
+  "turn_detection": {
+    "type": "server_vad",
+    "threshold": 0.5,
+    "prefix_padding_ms": 300,
+    "silence_duration_ms": 200
+  },
+  "input_audio_format": "pcm16",
+  "input_audio_transcription": {
+    "model": "gpt-4o-transcribe",
+    "language": null,
+    "prompt": ""
+  },
+  "client_secret": null
+}
+The session object
+A new Realtime session configuration, with an ephermeral key. Default TTL for keys is one minute.
+
+client_secret
+object
+Ephemeral key returned by the API.
+
+Show properties
+input_audio_format
+string
+The format of input audio. Options are pcm16, g711_ulaw, or g711_alaw.
+input_audio_transcription
+object
+Configuration for input audio transcription, defaults to off and can be set to null to turn off once on. Input audio transcription is not native to the model, since the model consumes audio directly. Transcription runs asynchronously through Whisper and should be treated as rough guidance rather than the representation understood by the model.
+
+Show properties
+instructions
+string
+The default system instructions (i.e. system message) prepended to model calls. This field allows the client to guide the model on desired responses. The model can be instructed on response content and format, (e.g. "be extremely succinct", "act friendly", "here are examples of good responses") and on audio behavior (e.g. "talk quickly", "inject emotion into your voice", "laugh frequently"). The instructions are not guaranteed to be followed by the model, but they provide guidance to the model on the desired behavior.
+
+Note that the server sets default instructions which will be used if this field is not set and are visible in the session.created event at the start of the session.
+max_response_output_tokens
+integer or "inf"
+Maximum number of output tokens for a single assistant response, inclusive of tool calls. Provide an integer between 1 and 4096 to limit output tokens, or inf for the maximum available tokens for a given model. Defaults to inf.
+modalities
+The set of modalities the model can respond with. To disable audio, set this to ["text"].
+output_audio_format
+string
+The format of output audio. Options are pcm16, g711_ulaw, or g711_alaw.
+temperature
+number
+Sampling temperature for the model, limited to [0.6, 1.2]. Defaults to 0.8.
+tool_choice
+string
+How the model chooses tools. Options are auto, none, required, or specify a function.
+tools
+array
+Tools (functions) available to the model.
+
+Show properties
+turn_detection
+object
+Configuration for turn detection. Can be set to null to turn off. Server VAD means that the model will detect the start and end of speech based on audio volume and respond at the end of user speech.
+
+Show properties
+voice
+string
+The voice the model uses to respond. Voice cannot be changed during the session once the model has responded with audio at least once. Current voice options are alloy, ash, ballad, coral, echo sage, shimmer and verse.
+OBJECT The session object
+{
+  "id": "sess_001",
+  "object": "realtime.session",
+  "model": "gpt-4o-realtime-preview",
+  "modalities": ["audio", "text"],
+  "instructions": "You are a friendly assistant.",
+  "voice": "alloy",
+  "input_audio_format": "pcm16",
+  "output_audio_format": "pcm16",
+  "input_audio_transcription": {
+      "model": "whisper-1"
+  },
+  "turn_detection": null,
+  "tools": [],
+  "tool_choice": "none",
+  "temperature": 0.7,
+  "max_response_output_tokens": 200,
+  "client_secret": {
+    "value": "ek_abc123", 
+    "expires_at": 1234567890
+  }
+}
+The transcription session object
+A new Realtime transcription session configuration.
+
+When a session is created on the server via REST API, the session object also contains an ephemeral key. Default TTL for keys is one minute. This property is not present when a session is updated via the WebSocket API.
+
+client_secret
+object
+Ephemeral key returned by the API. Only present when the session is created on the server via REST API.
+
+Show properties
+input_audio_format
+string
+The format of input audio. Options are pcm16, g711_ulaw, or g711_alaw.
+input_audio_transcription
+object
+Configuration of the transcription model.
+
+Show properties
+modalities
+The set of modalities the model can respond with. To disable audio, set this to ["text"].
+turn_detection
+object
+Configuration for turn detection. Can be set to null to turn off. Server VAD means that the model will detect the start and end of speech based on audio volume and respond at the end of user speech.
+
+Show properties
+OBJECT The transcription session object
+{
+  "id": "sess_BBwZc7cFV3XizEyKGDCGL",
+  "object": "realtime.transcription_session",
+  "expires_at": 1742188264,
+  "modalities": ["audio", "text"],
+  "turn_detection": {
+    "type": "server_vad",
+    "threshold": 0.5,
+    "prefix_padding_ms": 300,
+    "silence_duration_ms": 200
+  },
+  "input_audio_format": "pcm16",
+  "input_audio_transcription": {
+    "model": "gpt-4o-transcribe",
+    "language": null,
+    "prompt": ""
+  },
+  "client_secret": null
+}
+Client events
+These are events that the OpenAI Realtime WebSocket server will accept from the client.
+session.update
+Send this event to update the session’s default configuration. The client may send this event at any time to update any field, except for voice. However, note that once a session has been initialized with a particular model, it can’t be changed to another model using session.update.
+
+When the server receives a session.update, it will respond with a session.updated event showing the full, effective configuration. Only the fields that are present are updated. To clear a field like instructions, pass an empty string.
+
+event_id
+string
+Optional client-generated ID used to identify this event.
+session
+object
+Realtime session object configuration.
+
+Show properties
+type
+string
+The event type, must be session.update.
+OBJECT session.update
+{
+    "event_id": "event_123",
+    "type": "session.update",
+    "session": {
+        "modalities": ["text", "audio"],
+        "instructions": "You are a helpful assistant.",
+        "voice": "sage",
+        "input_audio_format": "pcm16",
+        "output_audio_format": "pcm16",
+        "input_audio_transcription": {
+            "model": "whisper-1"
+        },
+        "turn_detection": {
+            "type": "server_vad",
+            "threshold": 0.5,
+            "prefix_padding_ms": 300,
+            "silence_duration_ms": 500,
+            "create_response": true
+        },
+        "tools": [
+            {
+                "type": "function",
+                "name": "get_weather",
+                "description": "Get the current weather...",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "location": { "type": "string" }
+                    },
+                    "required": ["location"]
+                }
+            }
+        ],
+        "tool_choice": "auto",
+        "temperature": 0.8,
+        "max_response_output_tokens": "inf"
+    }
+}
+input_audio_buffer.append
+Send this event to append audio bytes to the input audio buffer. The audio buffer is temporary storage you can write to and later commit. In Server VAD mode, the audio buffer is used to detect speech and the server will decide when to commit. When Server VAD is disabled, you must commit the audio buffer manually.
+
+The client may choose how much audio to place in each event up to a maximum of 15 MiB, for example streaming smaller chunks from the client may allow the VAD to be more responsive. Unlike made other client events, the server will not send a confirmation response to this event.
+
+audio
+string
+Base64-encoded audio bytes. This must be in the format specified by the input_audio_format field in the session configuration.
+event_id
+string
+Optional client-generated ID used to identify this event.
+type
+string
+The event type, must be input_audio_buffer.append.
+OBJECT input_audio_buffer.append
+{
+    "event_id": "event_456",
+    "type": "input_audio_buffer.append",
+    "audio": "Base64EncodedAudioData"
+}
+input_audio_buffer.commit
+Send this event to commit the user input audio buffer, which will create a new user message item in the conversation. This event will produce an error if the input audio buffer is empty. When in Server VAD mode, the client does not need to send this event, the server will commit the audio buffer automatically.
+
+Committing the input audio buffer will trigger input audio transcription (if enabled in session configuration), but it will not create a response from the model. The server will respond with an input_audio_buffer.committed event.
+
+event_id
+string
+Optional client-generated ID used to identify this event.
+type
+string
+The event type, must be input_audio_buffer.commit.
+OBJECT input_audio_buffer.commit
+{
+    "event_id": "event_789",
+    "type": "input_audio_buffer.commit"
+}
+input_audio_buffer.clear
+Send this event to clear the audio bytes in the buffer. The server will respond with an input_audio_buffer.cleared event.
+
+event_id
+string
+Optional client-generated ID used to identify this event.
+type
+string
+The event type, must be input_audio_buffer.clear.
+OBJECT input_audio_buffer.clear
+{
+    "event_id": "event_012",
+    "type": "input_audio_buffer.clear"
+}
+conversation.item.create
+Add a new Item to the Conversation's context, including messages, function calls, and function call responses. This event can be used both to populate a "history" of the conversation and to add new items mid-stream, but has the current limitation that it cannot populate assistant audio messages.
+
+If successful, the server will respond with a conversation.item.created event, otherwise an error event will be sent.
+
+event_id
+string
+Optional client-generated ID used to identify this event.
+item
+object
+The item to add to the conversation.
+
+Hide properties
+arguments
+string
+The arguments of the function call (for function_call items).
+call_id
+string
+The ID of the function call (for function_call and function_call_output items). If passed on a function_call_output item, the server will check that a function_call item with the same ID exists in the conversation history.
+content
+array
+The content of the message, applicable for message items.
+
+Message items of role system support only input_text content
+Message items of role user support input_text and input_audio content
+Message items of role assistant support text content.
+
+Show properties
+id
+string
+The unique ID of the item, this can be generated by the client to help manage server-side context, but is not required because the server will generate one if not provided.
+name
+string
+The name of the function being called (for function_call items).
+object
+string
+Identifier for the API object being returned - always realtime.item.
+output
+string
+The output of the function call (for function_call_output items).
+role
+string
+The role of the message sender (user, assistant, system), only applicable for message items.
+status
+string
+The status of the item (completed, incomplete). These have no effect on the conversation, but are accepted for consistency with the conversation.item.created event.
+type
+string
+The type of the item (message, function_call, function_call_output).
+
+previous_item_id
 The ID of the preceding item after which the new item will be inserted. If not set, the new item will be appended to the end of the conversation. If set to root, the new item will be added to the beginning of the conversation. If set to an existing ID, it allows an item to be inserted mid-conversation. If the ID cannot be found, an error will be returned and the item will not be added.
 type
 string

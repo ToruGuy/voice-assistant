@@ -5,8 +5,9 @@ from datetime import datetime
 
 # Import from our custom modules
 from src.config import logger
-from src.audio_handler import SpaceKeyRecorder, transcribe_audio, play_audio
-from src.openai_client import chat_with_gpt, text_to_speech, clear_conversation_history
+from src.audio_handler import SpaceKeyRecorder, play_audio
+from src.openai_client import chat_with_gpt, text_to_speech, clear_conversation_history, transcribe_audio
+from src.utils import chunk_text_for_tts
 
 def ensure_recordings_dir():
     """Ensure the recordings directory exists."""
@@ -56,24 +57,50 @@ def main():
                 print(f"You said: {transcription}")
                     
                 # Send to GPT for processing
-                response = chat_with_gpt(transcription)
-                print(f"\nAssistant: {response}")
+                print("\nAssistant: ", end="", flush=True)
+                full_response = ""
+                current_buffer = ""  # Buffer for accumulating text chunks
+                
+                for chunk in chat_with_gpt(transcription, True):
+                    if chunk["type"] == "content":
+                        content = chunk["data"]
+                        full_response += content
+                        print(content, end="", flush=True)
+                        
+                        # Process text using the chunking utility
+                        chunk_to_process, current_buffer = chunk_text_for_tts(content, current_buffer)
+                        
+                        if chunk_to_process:
+                            # Generate and play speech for this chunk
+                            logger.info(f"Converting chunk to speech: '{chunk_to_process}'")
+                            chunk_audio_path = text_to_speech(chunk_to_process, 2.0)
+                            if chunk_audio_path:
+                                # Play the generated chunk speech without blocking
+                                play_audio(chunk_audio_path, block=False)
+                    elif chunk["type"] == "function_response":
+                        # Log function responses if needed
+                        logger.info(f"Function {chunk['name']} returned: {chunk['data']}")
+                    elif chunk["type"] == "error":
+                        # Handle errors
+                        logger.error(f"Error in streaming: {chunk['data']}")
+                        full_response += f"\nError: {chunk['data']}"
+                        print(f"\nError: {chunk['data']}")
+                
+                print()  # Add newline after streaming completes
+                
+                # Process any remaining text in buffer
+                if current_buffer.strip():
+                    logger.info(f"Converting final chunk to speech: '{current_buffer}'")
+                    chunk_audio_path = text_to_speech(current_buffer, 2.0)
+                    if chunk_audio_path:
+                        play_audio(chunk_audio_path, block=True)
                 
                 # Save response to file for debugging
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 response_path = os.path.join(os.getcwd(), "recordings", f"response_{timestamp}.txt")
                 with open(response_path, 'w') as f:
-                    f.write(response)
+                    f.write(full_response)
                 print(f"Response saved to: {response_path}")
-                
-                # Text to speech
-                audio_path = text_to_speech(response)
-                if audio_path:
-                    # Play the generated speech
-                    play_audio(audio_path)
-                    
-                    # Clean up the temporary audio file
-                    os.remove(audio_path)
                 
         except KeyboardInterrupt:
             print("\nExiting voice assistant. Goodbye!")

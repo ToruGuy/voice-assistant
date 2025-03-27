@@ -30,5 +30,5 @@ SPEECH_ENDPOINT = "https://api.openai.com/v1/audio/speech"
 
 # Default model settings
 DEFAULT_MODEL = "gpt-4o-mini"  # Using o3-mini as default per user preferences
-TTS_MODEL = "tts-1"
-TTS_VOICE = "alloy"
+TTS_MODEL = "gpt-4o-mini-tts"
+TTS_VOICE = "nova"
