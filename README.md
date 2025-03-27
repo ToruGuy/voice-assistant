@@ -7,6 +7,7 @@ A real-time voice assistant built with Python and OpenAI, designed to process vo
 - **Voice Recognition**: Press and hold the SPACE key to record your voice input
 - **Natural Language Processing**: Uses OpenAI's GPT-4o-mini model to understand and respond to queries
 - **Text-to-Speech**: Converts responses to natural-sounding speech using OpenAI's TTS
+- **Response Streaming**: Receives and processes responses in real-time as they're generated
 - **Function Calling**: Executes functions based on voice commands
 - **Simple Interface**: Easy-to-use keyboard-based recording system
 
@@ -67,7 +68,8 @@ python voice_assistant.py
   - `audio_recorder.py`: Low-level audio recording functionality
   - `config.py`: Configuration settings
   - `functions.py`: Defines available functions for the assistant
-  - `openai_client.py`: OpenAI API integration
+  - `openai_client.py`: OpenAI API integration with streaming support
+  - `utils.py`: Utility functions
 - `recordings/`: Stores recordings and response logs
 - `my-input/`: Input files for the assistant
 
@@ -77,6 +79,17 @@ The assistant can execute predefined functions. Currently implemented:
 
 - `calculate_sum`: Adds two numbers
 - `get_current_time`: Returns the current time
+
+## Key Features Explained
+
+### Response Streaming
+
+The assistant processes responses as they arrive from the OpenAI API rather than waiting for the complete response. This provides:
+
+- Improved responsiveness with near real-time feedback
+- More natural conversational flow
+- Better handling of function calls in streaming mode
+- Support for both streaming and non-streaming modes
 
 ## Future Development
 
