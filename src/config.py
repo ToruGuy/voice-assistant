@@ -5,12 +5,13 @@ import sys
 import pyaudio
 from dotenv import load_dotenv
 
+
 # Load environment variables
 load_dotenv()
 API_KEY = os.getenv("OPENAI_API_KEY")
-if not API_KEY:
-    logging.error("OPENAI_API_KEY not found in environment variables.")
-    sys.exit(1)
+#if not API_KEY:
+#    logging.error("OPENAI_API_KEY not found in environment variables.")
+#    sys.exit(1)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
