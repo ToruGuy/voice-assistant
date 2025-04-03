@@ -3,5 +3,5 @@ websockets
 PyAudio
 python-dotenv
 openai
-elevenlabs
 PyQt5
+pynput
