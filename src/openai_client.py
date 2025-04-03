@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import json
 import tempfile
-import requests
 import os
 from datetime import datetime
 from openai import OpenAI
@@ -321,33 +320,36 @@ def clear_conversation_history():
 
 def transcribe_audio(audio_data):
     """Transcribe audio data using OpenAI's Whisper API."""
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as temp_file:
+    # Create a temporary file that won't be auto-deleted (windows locks exclusively file and cannot be read.)
+    temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+    try:
         temp_file.write(audio_data.getvalue())
         temp_file.flush()
+        temp_file.close()  # Close the file to release the lock on Windows
         
         logger.info("Transcribing audio...")
         
-        # Use the existing global client instead of creating a new one
-        try:
-            with open(temp_file.name, "rb") as audio_file:
-                # Use the OpenAI SDK to transcribe the audio
-                transcription = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file
-                )
-                
-                logger.info(f"Transcription: {transcription.text}")
-                
-                # Save transcription to a text file
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                transcript_path = os.path.join(os.getcwd(), "recordings", f"transcript_{timestamp}.txt")
-                
-                with open(transcript_path, 'w') as f:
-                    f.write(transcription.text)
-                    
-                logger.info(f"Transcription saved to {transcript_path}")
-                
-                return transcription.text
-        except Exception as e:
-            logger.error(f"Transcription failed: {str(e)}")
-            return None
+        # Open the file in binary mode for the API
+        with open(temp_file.name, 'rb') as audio_file:
+            transcription = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file
+            )
+        
+        logger.info(f"Transcription: {transcription.text}")
+        
+        # Save transcription to a text file
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        transcript_path = os.path.join(os.getcwd(), "recordings", f"transcript_{timestamp}.txt")
+        
+        with open(transcript_path, 'w') as f:
+            f.write(transcription.text)
+            
+        logger.info(f"Transcription saved to {transcript_path}")
+        return transcription.text
+    except Exception as e:
+        logger.error(f"Transcription failed: {str(e)}")
+        return None
+    finally:
+        # Clean up the temporary file
+        os.remove(temp_file.name)
