@@ -1,5 +1,7 @@
 recordings
 .env
+my-input
+.DS_Store
 
 # Python
 __pycache__/
